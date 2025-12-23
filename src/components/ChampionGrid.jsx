@@ -32,6 +32,16 @@ const ChampionGrid = () => {
     const handleSelect = (champion) => {
         const { disabled } = isChampionDisabled(champion.id);
         if (!disabled) {
+            // Play audio if available
+            if (champion.audio) {
+                try {
+                    const audio = new Audio(champion.audio);
+                    audio.volume = 0.4;
+                    audio.play().catch(e => console.error("Audio play failed:", e));
+                } catch (e) {
+                    console.error("Audio setup failed:", e);
+                }
+            }
             selectChampion(champion);
         }
     };
