@@ -316,6 +316,7 @@ body {
   flex-direction: column;
   gap: 8px;
   flex: 1;
+  min-height: 0;
 }
 
 .bans-container {
@@ -323,6 +324,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .bans-label {
@@ -375,6 +377,7 @@ body {
   /* Expand to fill space */
   display: flex;
   /* Ensure content stretches */
+  min-height: 0;
 }
 
 .draft-slot.ban {

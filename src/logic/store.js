@@ -109,7 +109,7 @@ export const useDraftStore = create((set, get) => ({
         });
     },
 
-    nextGame: () => {
+    nextGame: (winner) => {
         const { gameCount, blueSide, redSide, history } = get();
 
         // Archive current game
@@ -117,6 +117,11 @@ export const useDraftStore = create((set, get) => ({
             gameNumber: gameCount,
             picks: [...blueSide.picks, ...redSide.picks].filter(Boolean),
             bans: [...blueSide.bans, ...redSide.bans].filter(Boolean),
+            bluePicks: [...blueSide.picks],
+            redPicks: [...redSide.picks],
+            blueBans: [...blueSide.bans],
+            redBans: [...redSide.bans],
+            winner: winner, // 'BLUE' or 'RED'
         };
 
         set({
