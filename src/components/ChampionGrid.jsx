@@ -1,21 +1,33 @@
 import { useState, useMemo } from 'react';
 import { useDraftStore } from '../logic/store';
-import { CHAMPIONS, getChampionImage } from '../logic/champions';
 
-const ROLES = ["Top", "Jungle", "Mid", "Adc", "Support"];
+const ROLES = ["Top", "Jungle", "Mid", "ADC", "Support"];
 
 const ChampionGrid = () => {
-    const { selectChampion, isChampionDisabled, currentStepIndex } = useDraftStore();
+    const {
+        selectChampion,
+        isChampionDisabled,
+        champions,
+        isLoading,
+        error
+    } = useDraftStore();
+
     const [search, setSearch] = useState('');
     const [roleFilter, setRoleFilter] = useState(null);
 
     const filteredChampions = useMemo(() => {
-        return CHAMPIONS.filter(c => {
+        return champions.filter(c => {
             const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase());
+            // Role filter: Check if the champion's calculated roles include the selected filter
+            // Note: API "Bot" role is often "Bottom" or mapped from Marksman. 
+            // Our map uses "Top", "Jungle", "Mid", "Bot", "Support"
             const matchesRole = roleFilter ? c.roles.includes(roleFilter) : true;
             return matchesSearch && matchesRole;
         });
-    }, [search, roleFilter]);
+    }, [champions, search, roleFilter]);
+
+    if (isLoading) return <div className="loading-state">Loading Champions...</div>;
+    if (error) return <div className="error-state">{error}</div>;
 
     const handleSelect = (champion) => {
         const { disabled } = isChampionDisabled(champion.id);
@@ -65,7 +77,7 @@ const ChampionGrid = () => {
                             className={`champion-card ${disabled ? 'disabled' : ''}`}
                             onClick={() => handleSelect(champ)}
                         >
-                            <img src={getChampionImage(champ.id)} alt={champ.name} loading="lazy" />
+                            <img src={champ.image} alt={champ.name} loading="lazy" />
                             <div className="champion-name-overlay">{champ.name}</div>
 
                             {disabled && (

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { fetchPatchVersion, fetchChampions } from './draft-api';
 
 // Phases for a single game draft
 // Simplified Pro Draft Order (Standard 10 ban system logic, adjusted for UI simplicity)
@@ -41,6 +42,24 @@ const DRAFT_ORDER = [
 export const useDraftStore = create((set, get) => ({
     gameCount: 1, // Current game number (1-5)
     currentStepIndex: 0, // Index in DRAFT_ORDER
+
+    // API State
+    champions: [],
+    version: '',
+    isLoading: false,
+    error: null,
+
+    // Actions
+    loadChampions: async () => {
+        set({ isLoading: true });
+        try {
+            const version = await fetchPatchVersion();
+            const champions = await fetchChampions(version);
+            set({ champions, version, isLoading: false });
+        } catch (err) {
+            set({ error: "Failed to load champions", isLoading: false });
+        }
+    },
 
     // Current Game State
     blueSide: {

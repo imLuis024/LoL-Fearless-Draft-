@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useDraftStore } from './logic/store';
 import Header from './components/Header';
 import DraftBoard from './components/DraftBoard';
@@ -5,7 +6,11 @@ import ChampionGrid from './components/ChampionGrid';
 import './index.css';
 
 function App() {
-  const { gameCount } = useDraftStore();
+  const { gameCount, loadChampions } = useDraftStore();
+
+  useEffect(() => {
+    loadChampions();
+  }, []);
 
   return (
     <div className="app-container">

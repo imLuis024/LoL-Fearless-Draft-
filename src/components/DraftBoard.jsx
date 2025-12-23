@@ -1,12 +1,11 @@
 import { useDraftStore } from '../logic/store';
-import { getChampionImage } from '../logic/champions';
 
 const Slot = ({ type, side, index, champion, isActive }) => {
     return (
         <div className={`draft-slot ${type.toLowerCase()} ${side.toLowerCase()} ${isActive ? 'active' : ''}`}>
             {champion ? (
                 <div className="champion-image-container">
-                    <img src={getChampionImage(champion.id)} alt={champion.name} className="champion-img" />
+                    <img src={champion.image} alt={champion.name} className="champion-img" />
                     <div className="champion-name">{champion.name}</div>
                 </div>
             ) : (
