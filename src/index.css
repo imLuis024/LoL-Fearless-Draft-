@@ -192,7 +192,8 @@ body {
   border-bottom: 1px solid var(--color-gold-300);
 }
 
-.header-left, .header-right {
+.header-left,
+.header-right {
   flex: 1;
   display: flex;
   align-items: center;
@@ -229,7 +230,8 @@ body {
 
 .game-number {
   color: #fff;
-  font-family: 'Beaufort', serif; /* Fallback */
+  font-family: 'Beaufort', serif;
+  /* Fallback */
 }
 
 .phase-indicator {
@@ -240,10 +242,17 @@ body {
   font-weight: 600;
 }
 
-.text-blue { color: var(--color-blue-action); }
-.text-red { color: var(--color-red-action); }
+.text-blue {
+  color: var(--color-blue-action);
+}
 
-.space-right { margin-right: 12px; }
+.text-red {
+  color: var(--color-red-action);
+}
+
+.space-right {
+  margin-right: 12px;
+}
 
 /* Draft Board Styles */
 .draft-board {
@@ -262,8 +271,29 @@ body {
 .vs-column {
   width: 40px;
   display: flex;
+  flex-direction: column;
+}
+
+.vs-spacer-header {
+  /* Match team-name: 1.2rem * 1.5 line-height + 10px margin */
+  height: calc(1.2rem * 1.5 + 10px);
+  flex-shrink: 0;
+}
+
+.vs-center {
+  flex: 1;
+  display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.vs-spacer-bans {
+  /* Match bans-container: 10px margin-top + label + bans-row */
+  /* Label: 0.8rem * 1.5 + 4px margin = ~23px */
+  /* Row: 50px */
+  /* Total approx 83px */
+  height: 83px;
+  flex-shrink: 0;
 }
 
 .vs-text {
@@ -310,8 +340,8 @@ body {
 
 /* Slots */
 .draft-slot {
-  background: rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -324,13 +354,27 @@ body {
 }
 
 @keyframes pulse-border {
-  0% { border-color: var(--color-gold-200); box-shadow: 0 0 5px var(--color-gold-200); }
-  50% { border-color: var(--color-gold-100); box-shadow: 0 0 15px var(--color-gold-100); }
-  100% { border-color: var(--color-gold-200); box-shadow: 0 0 5px var(--color-gold-200); }
+  0% {
+    border-color: var(--color-gold-200);
+    box-shadow: 0 0 5px var(--color-gold-200);
+  }
+
+  50% {
+    border-color: var(--color-gold-100);
+    box-shadow: 0 0 15px var(--color-gold-100);
+  }
+
+  100% {
+    border-color: var(--color-gold-200);
+    box-shadow: 0 0 5px var(--color-gold-200);
+  }
 }
 
 .draft-slot.pick {
-  height: 80px; /* Taller for picks */
+  flex: 1;
+  /* Expand to fill space */
+  display: flex;
+  /* Ensure content stretches */
 }
 
 .draft-slot.ban {
@@ -360,7 +404,8 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scale(1.1); /* Zoom slightly */
+  transform: scale(1.1);
+  /* Zoom slightly */
 }
 
 .champion-name {
@@ -368,7 +413,7 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0, 0, 0, 0.7);
   font-size: 0.8rem;
   text-align: center;
   text-transform: uppercase;
@@ -392,7 +437,7 @@ body {
 .search-input {
   width: 100%;
   padding: 10px;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.4);
   border: 1px solid var(--glass-border);
   color: #fff;
   font-size: 1rem;
@@ -411,7 +456,7 @@ body {
 
 .role-btn {
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--color-text-secondary);
   padding: 4px 10px;
   font-size: 0.8rem;
@@ -420,7 +465,8 @@ body {
   transition: all 0.2s;
 }
 
-.role-btn.active, .role-btn:hover {
+.role-btn.active,
+.role-btn:hover {
   border-color: var(--color-gold-200);
   color: var(--color-gold-100);
   background: rgba(200, 170, 110, 0.1);
@@ -459,11 +505,12 @@ body {
   position: absolute;
   bottom: 0;
   width: 100%;
-  background: rgba(0,0,0,0.8);
+  background: rgba(0, 0, 0, 0.8);
   font-size: 0.7rem;
   text-align: center;
   padding: 2px 0;
-  display: none; /* Show on hover */
+  display: none;
+  /* Show on hover */
 }
 
 .champion-card:hover .champion-name-overlay {
@@ -483,10 +530,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
 }
 
-.reason-ban, .reason-fearless {
+.reason-ban,
+.reason-fearless {
   font-size: 0.7rem;
   font-weight: bold;
   padding: 2px 4px;
@@ -497,12 +545,11 @@ body {
 .reason-ban {
   border: 1px solid var(--color-red-action);
   color: var(--color-red-action);
-  background: rgba(0,0,0,0.8);
+  background: rgba(0, 0, 0, 0.8);
 }
 
 .reason-fearless {
   border: 1px solid var(--color-gold-200);
   color: var(--color-gold-200);
-  background: rgba(0,0,0,0.8);
+  background: rgba(0, 0, 0, 0.8);
 }
-

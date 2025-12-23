@@ -5,7 +5,11 @@ const Slot = ({ type, side, index, champion, isActive }) => {
         <div className={`draft-slot ${type.toLowerCase()} ${side.toLowerCase()} ${isActive ? 'active' : ''}`}>
             {champion ? (
                 <div className="champion-image-container">
-                    <img src={champion.image} alt={champion.name} className="champion-img" />
+                    <img
+                        src={type === 'PICK' ? champion.centeredImage : champion.image}
+                        alt={champion.name}
+                        className="champion-img"
+                    />
                     <div className="champion-name">{champion.name}</div>
                 </div>
             ) : (
@@ -62,9 +66,18 @@ const DraftBoard = () => {
                 </div>
             </div>
 
-            {/* VS / Timer Area (Static for now) */}
+            {/* VS / Timer Area */}
             <div className="vs-column">
-                <div className="vs-text">VS</div>
+                {/* Spacer to match team header */}
+                <div className="vs-spacer-header"></div>
+
+                {/* Centered VS text (mirrors picks container) */}
+                <div className="vs-center">
+                    <div className="vs-text">VS</div>
+                </div>
+
+                {/* Spacer to match bans container */}
+                <div className="vs-spacer-bans"></div>
             </div>
 
             {/* Red Team */}

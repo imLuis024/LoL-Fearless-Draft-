@@ -69,6 +69,7 @@ export const fetchChampions = async (version) => {
                 name: champ.name,
                 roles: Array.from(roles),
                 image: `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${champ.image.full}`,
+                centeredImage: `https://ddragon.leagueoflegends.com/cdn/img/champion/centered/${champ.id}_0.jpg`,
                 audio: `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/${champ.key}.ogg`
             };
         });
