@@ -65,6 +65,7 @@ export const fetchChampions = async (version) => {
 
             return {
                 id: champ.id,
+                key: champ.key,
                 name: champ.name,
                 roles: Array.from(roles),
                 image: `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${champ.image.full}`,

@@ -9,7 +9,8 @@ const ChampionGrid = () => {
         isChampionDisabled,
         champions,
         isLoading,
-        error
+        error,
+        audioLanguage
     } = useDraftStore();
 
     const [search, setSearch] = useState('');
@@ -33,9 +34,13 @@ const ChampionGrid = () => {
         const { disabled } = isChampionDisabled(champion.id);
         if (!disabled) {
             // Play audio if available
-            if (champion.audio) {
+            if (champion.key) {
                 try {
-                    const audio = new Audio(champion.audio);
+                    const lang = audioLanguage || 'default';
+                    // Use dynamic URL based on language
+                    const audioUrl = `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/${lang}/v1/champion-choose-vo/${champion.key}.ogg`;
+
+                    const audio = new Audio(audioUrl);
                     audio.volume = 0.4;
                     audio.play().catch(e => console.error("Audio play failed:", e));
                 } catch (e) {

@@ -61,6 +61,10 @@ export const useDraftStore = create((set, get) => ({
         }
     },
 
+    // Audio Language State
+    audioLanguage: 'default',
+    setAudioLanguage: (lang) => set({ audioLanguage: lang }),
+
     // Current Game State
     blueSide: {
         name: 'Blue Team',
