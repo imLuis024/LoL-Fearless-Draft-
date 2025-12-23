@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { fetchPatchVersion, fetchChampions } from './draft-api';
+import { detectLanguage, detectAudioLanguage } from './translations';
 
 // Phases for a single game draft
 // Simplified Pro Draft Order (Standard 10 ban system logic, adjusted for UI simplicity)
@@ -52,6 +53,11 @@ export const useDraftStore = create((set, get) => ({
     // Actions
     loadChampions: async () => {
         set({ isLoading: true });
+        // Auto-detect languages on first load
+        const detectedUI = detectLanguage();
+        const detectedAudio = detectAudioLanguage();
+        set({ uiLanguage: detectedUI, audioLanguage: detectedAudio });
+
         try {
             const version = await fetchPatchVersion();
             const champions = await fetchChampions(version);
@@ -61,7 +67,10 @@ export const useDraftStore = create((set, get) => ({
         }
     },
 
-    // Audio Language State
+    // Language State
+    uiLanguage: 'en', // 'en' or 'es'
+    setUiLanguage: (lang) => set({ uiLanguage: lang }),
+
     audioLanguage: 'default',
     setAudioLanguage: (lang) => set({ audioLanguage: lang }),
 
@@ -78,7 +87,7 @@ export const useDraftStore = create((set, get) => ({
     },
 
     // History of previous games for Fearless Logic
-    // Each entry: { gameNumber: 1, picks: [], bans: [] }
+    // Each entry: { gameNumber: 1, winner: 'BLUE'/'RED', picks: [], bans: [], bluePicks: [], redPicks: [], blueBans: [], redBans: [] }
     history: [],
 
     // Series State

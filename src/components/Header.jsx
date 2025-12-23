@@ -1,17 +1,31 @@
 import { useState } from 'react';
 import { useDraftStore } from '../logic/store';
 import GameResultModal from './GameResultModal';
+import { TRANSLATIONS } from '../logic/translations';
 
 const Header = () => {
-    const { gameCount, nextGame, resetSeries, getCurrentStep, audioLanguage, setAudioLanguage } = useDraftStore();
+    const {
+        gameCount,
+        nextGame,
+        resetSeries,
+        getCurrentStep,
+        audioLanguage,
+        setAudioLanguage,
+        uiLanguage,
+        setUiLanguage
+    } = useDraftStore();
+
     const currentStep = getCurrentStep();
+    const [isAudioMenuOpen, setIsAudioMenuOpen] = useState(false);
     const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
 
     // UI State for Modals
     const [showResultModal, setShowResultModal] = useState(false);
 
-    // Short codes for languages
-    const LANGUAGES = [
+    const t = TRANSLATIONS[uiLanguage] || TRANSLATIONS.en;
+
+    // Short codes for Audio languages
+    const AUDIO_LANGUAGES = [
         { code: 'default', label: 'English', short: 'EN', flag: '🇺🇸' },
         { code: 'es_mx', label: 'Spanish (MX)', short: 'MX', flag: '🇲🇽' },
         { code: 'es_es', label: 'Spanish (EU)', short: 'ES', flag: '🇪🇸' },
@@ -26,7 +40,13 @@ const Header = () => {
         { code: 'tr_tr', label: 'Turkish', short: 'TR', flag: '🇹🇷' }
     ];
 
-    const currentLang = LANGUAGES.find(l => l.code === audioLanguage) || LANGUAGES[0];
+    const UI_LANGUAGES = [
+        { code: 'en', label: 'English', short: 'EN', flag: '🇺🇸' },
+        { code: 'es', label: 'Español', short: 'ES', flag: '🇲🇽' },
+    ];
+
+    const currentAudioLang = AUDIO_LANGUAGES.find(l => l.code === audioLanguage) || AUDIO_LANGUAGES[0];
+    const currentUiLang = UI_LANGUAGES.find(l => l.code === uiLanguage) || UI_LANGUAGES[0];
 
     const handleGameComplete = (winner) => {
         nextGame(winner);
@@ -41,44 +61,44 @@ const Header = () => {
 
             <div className="header-center">
                 <div className="game-indicator">
-                    <span className="game-label text-gold">GAME</span>
+                    <span className="game-label text-gold">{t.GAME}</span>
                     <span className="game-number">{gameCount}</span>
                 </div>
                 <div className="phase-indicator">
                     {currentStep ? (
                         <span className={currentStep.side === 'BLUE' ? 'text-blue' : 'text-red'}>
-                            {currentStep.side} SIDE {currentStep.type}
+                            {currentStep.side === 'BLUE' ? t.BLUE_TEAM : t.RED_TEAM} {currentStep.type === 'PICK' ? t.PICK : t.BAN}
                         </span>
                     ) : (
-                        <span className="text-gold">DRAFT COMPLETE</span>
+                        <span className="text-gold">{t.DRAFT_COMPLETE}</span>
                     )}
                 </div>
             </div>
 
-            <div className="header-right relative" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div className="header-right relative" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
 
-                {/* Language Selector Dropdown */}
+                {/* UI Language Selector */}
                 <div className="relative" style={{ position: 'relative' }}>
                     <button
                         className="btn-secondary"
-                        onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
-                        title="Change Audio Language"
+                        onClick={() => {
+                            setIsLangMenuOpen(!isLangMenuOpen);
+                            setIsAudioMenuOpen(false); // Close other
+                        }}
+                        title="Change Text Language"
                         style={{
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             gap: '0.4rem',
-                            minWidth: '60px',
+                            minWidth: '50px',
                             height: '100%',
-                            aspectRatio: 'unset',
-                            padding: '0.5rem 1rem'
+                            padding: '0.5rem 0.8rem',
+                            border: isLangMenuOpen ? '1px solid var(--color-gold)' : undefined
                         }}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                        </svg>
-                        <span className="text-sm font-bold" style={{ fontSize: '0.7rem', marginTop: '4px' }}>{currentLang.short}</span>
+                        <span className="text-xl">🌐</span>
+                        <span className="text-sm font-bold" style={{ fontSize: '0.7rem' }}>{currentUiLang.short}</span>
                     </button>
 
                     {isLangMenuOpen && (
@@ -87,7 +107,71 @@ const Header = () => {
                             top: '50%',
                             right: '100%',
                             transform: 'translateY(-50%)',
-                            marginRight: '1rem',
+                            marginRight: '0.5rem',
+                            display: 'flex',
+                            flexDirection: 'row',
+                            gap: '0.5rem',
+                            padding: '0.5rem',
+                            zIndex: 60
+                        }}>
+                            {UI_LANGUAGES.map(lang => (
+                                <button
+                                    key={lang.code}
+                                    className={`btn-icon ${uiLanguage === lang.code ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setUiLanguage(lang.code);
+                                        setIsLangMenuOpen(false);
+                                    }}
+                                    style={{
+                                        border: uiLanguage === lang.code ? '1px solid var(--color-gold)' : '1px solid transparent',
+                                        padding: '0.4rem',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        minWidth: '40px'
+                                    }}
+                                >
+                                    <span style={{ fontSize: '1.2rem' }}>{lang.flag}</span>
+                                    <span style={{ fontSize: '0.6rem' }}>{lang.short}</span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Audio Language Selector */}
+                <div className="relative" style={{ position: 'relative' }}>
+                    <button
+                        className="btn-secondary"
+                        onClick={() => {
+                            setIsAudioMenuOpen(!isAudioMenuOpen);
+                            setIsLangMenuOpen(false); // Close other
+                        }}
+                        title="Change Audio Language"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.4rem',
+                            minWidth: '50px',
+                            height: '100%',
+                            padding: '0.5rem 0.8rem',
+                            border: isAudioMenuOpen ? '1px solid var(--color-gold)' : undefined
+                        }}
+                    >
+                        <span className="text-xl">🔊</span>
+                        <span className="text-sm font-bold" style={{ fontSize: '0.7rem' }}>{currentAudioLang.short}</span>
+                    </button>
+
+                    {isAudioMenuOpen && (
+                        <div className="glass-panel" style={{
+                            position: 'absolute',
+                            top: '50%',
+                            right: '100%',
+                            transform: 'translateY(-50%)',
+                            marginRight: '0.5rem',
                             display: 'flex',
                             flexDirection: 'row',
                             gap: '0.5rem',
@@ -97,13 +181,13 @@ const Header = () => {
                             maxWidth: '400px',
                             alignItems: 'center'
                         }}>
-                            {LANGUAGES.map(lang => (
+                            {AUDIO_LANGUAGES.map(lang => (
                                 <button
                                     key={lang.code}
                                     className={`btn-icon ${audioLanguage === lang.code ? 'active' : ''}`}
                                     onClick={() => {
                                         setAudioLanguage(lang.code);
-                                        setIsLangMenuOpen(false);
+                                        setIsAudioMenuOpen(false);
                                     }}
                                     title={lang.label}
                                     style={{
@@ -128,14 +212,14 @@ const Header = () => {
 
                 {!currentStep && (
                     <button className="btn-primary" onClick={() => setShowResultModal(true)}>
-                        NEXT GAME
+                        {t.NEXT_GAME}
                     </button>
                 )}
 
                 <button className="btn-secondary" onClick={() => {
-                    if (confirm('Are you sure you want to reset the series?')) resetSeries();
+                    if (confirm(t.RESET_CONFIRM)) resetSeries();
                 }}>
-                    RESET
+                    {t.RESET}
                 </button>
             </div>
 

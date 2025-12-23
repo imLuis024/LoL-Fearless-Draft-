@@ -121,8 +121,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-gold-300);
+  background: var(--color-gold-200);
   border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold-100);
 }
 
 /* App Layout */

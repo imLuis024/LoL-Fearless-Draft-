@@ -1,17 +1,16 @@
 import { useRef, useState } from 'react';
 import { useDraftStore } from '../logic/store';
+import { TRANSLATIONS } from '../logic/translations';
 import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const SeriesSummary = ({ isOpen }) => {
-    // NOTE: We don't need 'onClose' because this is a final screen in many cases, 
-    // or we can just hide the close button if we want to force them to see it. 
-    // But for usability, I'll keep the close button logic internally or via prop if provided.
-    // However, the prompt implies "te lleva a esta nueva sección", usually meaning routing. 
-    // Since we are using modals/overlays, full screen overlay works.
-
-    const { history } = useDraftStore();
+    const { history, uiLanguage } = useDraftStore();
     const summaryRef = useRef(null);
     const [isExporting, setIsExporting] = useState(false);
+    const [copyFeedback, setCopyFeedback] = useState(false);
+
+    const t = TRANSLATIONS[uiLanguage] || TRANSLATIONS.en;
 
     if (!isOpen) return null;
 
@@ -19,8 +18,6 @@ const SeriesSummary = ({ isOpen }) => {
     const blueWins = history.filter(h => h.winner === 'BLUE').length;
     const redWins = history.filter(h => h.winner === 'RED').length;
 
-    // Aggregate unique champions played by each team
-    // The prompt says "Campeones usados por cada equipo"
     const getUniqueChamps = (games, side) => {
         const all = [];
         games.forEach(g => {
@@ -39,7 +36,6 @@ const SeriesSummary = ({ isOpen }) => {
         games.forEach(g => {
             const bans = side === 'BLUE' ? (g.blueBans || []) : (g.redBans || []);
             bans.forEach(b => {
-                // Check if ban exists and is unique (bans can be null/empty if skipped, need to handle that)
                 if (b && !all.find(existing => existing.id === b.id)) {
                     all.push(b);
                 }
@@ -50,38 +46,114 @@ const SeriesSummary = ({ isOpen }) => {
 
     const bluePool = getUniqueChamps(history, 'BLUE');
     const redPool = getUniqueChamps(history, 'RED');
-
-    // For bans, usually we just show all unique bans total, or per team. 
-    // Prompt says "Campeones baneados por cada equipo".
     const blueBans = getUniqueBans(history, 'BLUE');
     const redBans = getUniqueBans(history, 'RED');
 
-    const downloadImage = async () => {
-        if (!summaryRef.current) return;
+    // Export Logic
+    const generateCanvas = async () => {
+        if (!summaryRef.current) return null;
+
+        const element = summaryRef.current;
+
+        // Get the full dimensions including borders
+        const rect = element.getBoundingClientRect();
+        const width = element.offsetWidth;  // includes border
+        const height = element.offsetHeight; // includes border
+
+        // Add extra padding to ensure borders are captured
+        const padding = 10;
+
+        return await html2canvas(element, {
+            backgroundColor: '#091428',
+            scale: 2, // High res
+            useCORS: true,
+            logging: false,
+            width: width + padding,
+            height: height + padding,
+            windowWidth: width + padding,
+            windowHeight: height + padding,
+            x: -padding / 2,
+            y: -padding / 2,
+            scrollX: 0,
+            scrollY: 0,
+            onclone: (clonedDoc) => {
+                const clonedElement = clonedDoc.querySelector('[data-summary-ref="true"]');
+                if (clonedElement) {
+                    // Ensure the element is fully visible in the clone
+                    clonedElement.style.position = 'relative';
+                    clonedElement.style.display = 'flex';
+                    clonedElement.style.overflow = 'visible';
+                }
+            }
+        });
+    };
+
+    const handleDownloadImage = async () => {
         setIsExporting(true);
-        // Wait for state update
-        setTimeout(async () => {
-            try {
-                const canvas = await html2canvas(summaryRef.current, {
-                    backgroundColor: '#091428',
-                    scale: 2,
-                    useCORS: true,
-                    logging: false
-                });
+        try {
+            const canvas = await generateCanvas();
+            if (canvas) {
                 const image = canvas.toDataURL('image/png');
                 const link = document.createElement('a');
                 link.href = image;
-                link.download = `series-result-${new Date().getTime()}.png`;
+                link.download = `fearless-draft-series-${new Date().getTime()}.png`;
                 link.click();
-            } catch (err) {
-                console.error("Export failed", err);
             }
-            setIsExporting(false);
-        }, 100);
+        } catch (err) {
+            console.error(err);
+        }
+        setIsExporting(false);
+    };
+
+    const handleDownloadPDF = async () => {
+        setIsExporting(true);
+        try {
+            const canvas = await generateCanvas();
+            if (canvas) {
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = canvas.width;
+                const imgHeight = canvas.height;
+
+                // Create PDF with same dimensions as canvas to maintain quality
+                const pdf = new jsPDF({
+                    orientation: imgWidth > imgHeight ? 'l' : 'p',
+                    unit: 'px',
+                    format: [imgWidth * 0.75, imgHeight * 0.75] // Scale down slightly for PDF viewer comfort
+                });
+
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth * 0.75, imgHeight * 0.75);
+                pdf.save(`fearless-draft-series-${new Date().getTime()}.pdf`);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+        setIsExporting(false);
+    };
+
+    const handleCopyToClipboard = async () => {
+        setIsExporting(true);
+        try {
+            const canvas = await generateCanvas();
+            if (canvas) {
+                canvas.toBlob(blob => {
+                    if (blob) {
+                        navigator.clipboard.write([
+                            new ClipboardItem({ 'image/png': blob })
+                        ]).then(() => {
+                            setCopyFeedback(true);
+                            setTimeout(() => setCopyFeedback(false), 2000);
+                        });
+                    }
+                });
+            }
+        } catch (err) {
+            console.error(err);
+        }
+        setIsExporting(false);
     };
 
     return (
-        <div className="fixed inset-0 z-[2000] bg-[#091428] overflow-y-auto"
+        <div className="fixed inset-0 z-[2000] bg-[#091428] custom-scrollbar"
             style={{
                 position: 'fixed',
                 top: 0,
@@ -91,48 +163,172 @@ const SeriesSummary = ({ isOpen }) => {
                 zIndex: 2000,
                 background: '#091428',
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflowY: 'auto'
+                flexDirection: 'column',
+                overflowY: 'scroll', // CRITICAL: inline style needed to override defaults
             }}
         >
-            <div className="w-full max-w-7xl mx-auto p-4 flex flex-col gap-4" style={{ width: '100%', maxWidth: '1400px', margin: '0 auto', padding: '1rem' }}>
+            {/* Centered Content Wrapper */}
+            <div style={{
+                margin: 'auto', // Magic of flexbox: centers if plenty of space, top-aligns if scrolling
+                paddingTop: '80px',
+                paddingBottom: '80px',
+                paddingLeft: '20px',  // Critical: prevents left/right borders from being clipped
+                paddingRight: '20px', // Critical: prevents left/right borders from being clipped
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                width: '100%',
+                minHeight: 'min-content'
+            }}>
 
-                {/* Control Bar */}
-                <div className="flex justify-end gap-4 mb-4 print:hidden" style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
-                    {/* We include a 'Close' just in case, though the user didn't explicitly remove it from the logic. */}
-                    {/* The request says 'automaticamente te lleva', implying a page transition. */}
+                {/* Floating Controls (Top Right) - FIXED position relative to screen */}
+                <div style={{
+                    position: 'fixed',
+                    top: '20px',
+                    right: '25px', // Shifted slightly more inward
+                    zIndex: 2200, // Higher than everything
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                }} className="print:hidden">
+
+                    {/* Action Bar */}
+                    <div style={{
+                        display: 'flex',
+                        background: 'rgba(16, 20, 30, 0.8)',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(200, 170, 110, 0.2)',
+                        borderRadius: '8px',
+                        padding: '4px',
+                        gap: '4px'
+                    }}>
+                        <button
+                            title={t.COPY_CLIPBOARD}
+                            onClick={handleCopyToClipboard}
+                            className="nav-icon-btn"
+                            style={{
+                                width: '40px', height: '40px',
+                                border: 'none', background: 'transparent',
+                                color: copyFeedback ? '#4ade80' : '#c8aa6e',
+                                fontSize: '1.2rem', cursor: 'pointer',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                transition: 'all 0.2s',
+                                borderRadius: '4px'
+                            }}
+                            onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                            onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                        >
+                            {copyFeedback ? '✓' : '📋'}
+                        </button>
+
+                        <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', margin: '4px 0' }}></div>
+
+                        <button
+                            title={t.DOWNLOAD_IMG}
+                            onClick={handleDownloadImage}
+                            style={{
+                                height: '40px', padding: '0 12px',
+                                border: 'none', background: 'transparent',
+                                color: '#f0e6d2', fontFamily: 'Beaufort', fontWeight: 'bold',
+                                cursor: 'pointer', letterSpacing: '1px', fontSize: '0.8rem',
+                                transition: 'all 0.2s',
+                                borderRadius: '4px'
+                            }}
+                            onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                            onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                        >
+                            IMG
+                        </button>
+
+                        <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', margin: '4px 0' }}></div>
+
+                        <button
+                            title={t.DOWNLOAD_PDF}
+                            onClick={handleDownloadPDF}
+                            style={{
+                                height: '40px', padding: '0 12px',
+                                border: 'none', background: 'transparent',
+                                color: '#f0e6d2', fontFamily: 'Beaufort', fontWeight: 'bold',
+                                cursor: 'pointer', letterSpacing: '1px', fontSize: '0.8rem',
+                                transition: 'all 0.2s',
+                                borderRadius: '4px'
+                            }}
+                            onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                            onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                        >
+                            PDF
+                        </button>
+
+                        <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', margin: '4px 0' }}></div>
+
+                        {/* Beer / Support - Discreet */}
+                        <a
+                            href="https://www.buymeacoffee.com/tinoco"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={t.BUY_ME_BEER}
+                            style={{
+                                width: '40px', height: '40px',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                textDecoration: 'none', fontSize: '1.2rem',
+                                opacity: 0.7, transition: 'opacity 0.2s',
+                                cursor: 'pointer'
+                            }}
+                            onMouseOver={e => e.currentTarget.style.opacity = '1'}
+                            onMouseOut={e => e.currentTarget.style.opacity = '0.7'}
+                        >
+                            🍺
+                        </a>
+                    </div>
+
+                    {/* New Series Button - Separate and Primary Action */}
                     <button
-                        onClick={downloadImage}
-                        className="btn-secondary"
-                        style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0.8rem 1.5rem', border: '1px solid var(--color-gold-200)', color: 'var(--color-gold-200)', background: 'transparent', cursor: 'pointer', textTransform: 'uppercase', fontWeight: 'bold' }}
+                        onClick={() => {
+                            if (confirm(t.NEW_SERIES_CONFIRM)) window.location.reload();
+                        }}
+                        style={{
+                            height: '48px', // Slightly taller to match the group
+                            padding: '0 20px',
+                            background: '#c8aa6e',
+                            border: 'none',
+                            borderRadius: '4px',
+                            color: '#091428',
+                            fontFamily: 'Beaufort, sans-serif',
+                            fontWeight: 'bold',
+                            letterSpacing: '1px',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 15px rgba(200, 170, 110, 0.3)',
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseOver={e => {
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.boxShadow = '0 6px 20px rgba(200, 170, 110, 0.5)';
+                        }}
+                        onMouseOut={e => {
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = '0 4px 15px rgba(200, 170, 110, 0.3)';
+                        }}
                     >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                        {isExporting ? 'GENERATING...' : 'DESCARGAR PARA COMPARTIR'}
-                    </button>
-                    {/* Optional Close for dev purposes mainly */}
-                    <button
-                        onClick={() => window.location.reload()} // "Reset" effectively
-                        className="btn-secondary"
-                        style={{ border: '1px solid #444', color: '#888' }}
-                    >
-                        CLOSE / RESET
+                        {t.NEW_SERIES}
                     </button>
                 </div>
 
                 {/* Main Capture Area */}
-                <div ref={summaryRef}
+                <div ref={summaryRef} data-summary-ref="true"
                     style={{
+                        width: '100%',
+                        maxWidth: '1200px',
                         background: 'radial-gradient(circle at 50% 20%, #1e282d 0%, #091428 80%)',
                         position: 'relative',
                         padding: '40px',
                         border: '2px solid #c8aa6e',
                         boxShadow: '0 0 60px rgba(0,0,0,0.8)',
-                        minHeight: '800px',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
-                        fontFamily: "'Inter', 'Beaufort', sans-serif"
+                        fontFamily: "'Inter', 'Beaufort', sans-serif",
+                        flexShrink: 0,
+                        boxSizing: 'border-box' // Ensure border is included in width
                     }}
                 >
                     {/* 1. Header Title */}
@@ -146,7 +342,7 @@ const SeriesSummary = ({ isOpen }) => {
                             margin: 0,
                             textShadow: '0 4px 10px rgba(0,0,0,0.6)'
                         }}>
-                            RESUMEN DE PARTIDAS
+                            {t.SERIES_SUMMARY}
                         </h1>
                         <h2 style={{
                             fontSize: '1.2rem',
@@ -180,7 +376,7 @@ const SeriesSummary = ({ isOpen }) => {
                             justifyContent: 'flex-end',
                             paddingRight: '30px'
                         }}>
-                            <span style={{ fontSize: '2rem', fontWeight: 'bold', color: '#00c8c8', letterSpacing: '2px' }}>BLUE TEAM</span>
+                            <span style={{ fontSize: '2rem', fontWeight: 'bold', color: '#00c8c8', letterSpacing: '2px' }}>{t.BLUE_TEAM}</span>
                         </div>
 
                         {/* Center Score */}
@@ -210,7 +406,7 @@ const SeriesSummary = ({ isOpen }) => {
                             justifyContent: 'flex-start',
                             paddingLeft: '30px'
                         }}>
-                            <span style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ff4655', letterSpacing: '2px' }}>RED TEAM</span>
+                            <span style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ff4655', letterSpacing: '2px' }}>{t.RED_TEAM}</span>
                         </div>
                     </div>
 
@@ -218,7 +414,7 @@ const SeriesSummary = ({ isOpen }) => {
                     <div style={{ width: '100%', maxWidth: '800px', marginBottom: '50px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '20px' }}>
                             <div style={{ height: '1px', background: '#c8aa6e', flex: 1, opacity: 0.3 }}></div>
-                            <h3 style={{ color: '#f0e6d2', textTransform: 'uppercase', letterSpacing: '2px', fontSize: '1.2rem', margin: 0 }}>HISTORIAL DE PARTIDAS</h3>
+                            <h3 style={{ color: '#f0e6d2', textTransform: 'uppercase', letterSpacing: '2px', fontSize: '1.2rem', margin: 0 }}>{t.MATCH_HISTORY}</h3>
                             <div style={{ height: '1px', background: '#c8aa6e', flex: 1, opacity: 0.3 }}></div>
                         </div>
 
@@ -234,13 +430,13 @@ const SeriesSummary = ({ isOpen }) => {
                                     borderTop: '1px solid rgba(255,255,255,0.05)',
                                     borderBottom: '1px solid rgba(255,255,255,0.05)'
                                 }}>
-                                    <span style={{ color: '#c8aa6e', fontWeight: 'bold', marginRight: '10px' }}>PARTIDA {game.gameNumber}:</span>
+                                    <span style={{ color: '#c8aa6e', fontWeight: 'bold', marginRight: '10px' }}>{t.GAME} {game.gameNumber}:</span>
                                     <span style={{
                                         fontWeight: 'bold',
                                         color: game.winner === 'BLUE' ? '#00c8c8' : '#ff4655',
                                         textTransform: 'uppercase'
                                     }}>
-                                        {game.winner === 'BLUE' ? 'VICTORIA (BLUE)' : 'VICTORIA (RED)'}
+                                        {game.winner === 'BLUE' ? t.VICTORY_BLUE : t.VICTORY_RED}
                                     </span>
                                 </div>
                             ))}
@@ -252,7 +448,7 @@ const SeriesSummary = ({ isOpen }) => {
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '30px' }}>
                             <div style={{ height: '1px', background: '#c8aa6e', flex: 1, opacity: 0.5 }}></div>
                             <div style={{ width: '10px', height: '10px', transform: 'rotate(45deg)', border: '1px solid #c8aa6e' }}></div>
-                            <h3 style={{ color: '#f0e6d2', textTransform: 'uppercase', letterSpacing: '2px', fontSize: '1.5rem', margin: 0, padding: '0 20px' }}>CAMPEONES JUGADOS</h3>
+                            <h3 style={{ color: '#f0e6d2', textTransform: 'uppercase', letterSpacing: '2px', fontSize: '1.5rem', margin: 0, padding: '0 20px' }}>{t.CHAMPIONS_PLAYED}</h3>
                             <div style={{ width: '10px', height: '10px', transform: 'rotate(45deg)', border: '1px solid #c8aa6e' }}></div>
                             <div style={{ height: '1px', background: '#c8aa6e', flex: 1, opacity: 0.5 }}></div>
                         </div>
@@ -270,10 +466,17 @@ const SeriesSummary = ({ isOpen }) => {
                             </div>
                             <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                                 {bluePool.map(c => (
-                                    <div key={c.id} style={{ position: 'relative', width: '80px', height: '80px', border: '1px solid #333' }}>
-                                        <img src={c.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <div key={c.id} style={{
+                                        position: 'relative',
+                                        width: '80px',
+                                        height: '80px',
+                                        border: '2px solid #c8aa6e',
+                                        boxSizing: 'border-box',
+                                        background: '#0a0a0c'
+                                    }}>
+                                        <img src={c.image} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                                         <div style={{
-                                            position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.7)',
+                                            position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.8)',
                                             color: '#fff', fontSize: '0.6rem', padding: '2px', textAlign: 'center', textTransform: 'uppercase'
                                         }}>{c.name}</div>
                                     </div>
@@ -294,10 +497,17 @@ const SeriesSummary = ({ isOpen }) => {
                             </div>
                             <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                                 {redPool.map(c => (
-                                    <div key={c.id} style={{ position: 'relative', width: '80px', height: '80px', border: '1px solid #333' }}>
-                                        <img src={c.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <div key={c.id} style={{
+                                        position: 'relative',
+                                        width: '80px',
+                                        height: '80px',
+                                        border: '2px solid #c8aa6e',
+                                        boxSizing: 'border-box',
+                                        background: '#0a0a0c'
+                                    }}>
+                                        <img src={c.image} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                                         <div style={{
-                                            position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.7)',
+                                            position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.8)',
                                             color: '#fff', fontSize: '0.6rem', padding: '2px', textAlign: 'center', textTransform: 'uppercase'
                                         }}>{c.name}</div>
                                     </div>
@@ -310,7 +520,7 @@ const SeriesSummary = ({ isOpen }) => {
                     <div style={{ width: '100%' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '20px' }}>
                             <div style={{ height: '1px', background: '#c8aa6e', flex: 1, opacity: 0.3 }}></div>
-                            <h3 style={{ color: '#c8aa6e', textTransform: 'uppercase', letterSpacing: '2px', fontSize: '1.2rem', margin: 0 }}>CAMPEONES BANEADOS</h3>
+                            <h3 style={{ color: '#c8aa6e', textTransform: 'uppercase', letterSpacing: '2px', fontSize: '1.2rem', margin: 0 }}>{t.CHAMPIONS_BANNED}</h3>
                             <div style={{ height: '1px', background: '#c8aa6e', flex: 1, opacity: 0.3 }}></div>
                         </div>
 
@@ -334,10 +544,9 @@ const SeriesSummary = ({ isOpen }) => {
                         </div>
                     </div>
 
-                </div>
-
-                <div className="text-center text-gray-500 text-sm mt-4">
-                    FEARLESS DRAFT - SERIES REPORT
+                    <div className="text-center text-gray-500 text-sm mt-8 opacity-50">
+                        FEARLESS DRAFT - SERIES REPORT
+                    </div>
                 </div>
             </div>
         </div>
