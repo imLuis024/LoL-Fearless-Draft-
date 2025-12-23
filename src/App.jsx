@@ -3,10 +3,11 @@ import { useDraftStore } from './logic/store';
 import Header from './components/Header';
 import DraftBoard from './components/DraftBoard';
 import ChampionGrid from './components/ChampionGrid';
+import SeriesSummary from './components/SeriesSummary';
 import './index.css';
 
 function App() {
-  const { gameCount, loadChampions } = useDraftStore();
+  const { gameCount, loadChampions, isSeriesComplete } = useDraftStore();
 
   useEffect(() => {
     loadChampions();
@@ -27,6 +28,8 @@ function App() {
       </div>
 
       <div className="bg-overlay"></div>
+
+      <SeriesSummary isOpen={isSeriesComplete} />
     </div>
   );
 }

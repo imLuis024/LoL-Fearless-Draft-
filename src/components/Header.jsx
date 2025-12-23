@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import { useDraftStore } from '../logic/store';
+import GameResultModal from './GameResultModal';
 
 const Header = () => {
     const { gameCount, nextGame, resetSeries, getCurrentStep, audioLanguage, setAudioLanguage } = useDraftStore();
     const currentStep = getCurrentStep();
     const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
 
-    // Using short codes for the button display as per design
+    // UI State for Modals
+    const [showResultModal, setShowResultModal] = useState(false);
+
+    // Short codes for languages
     const LANGUAGES = [
         { code: 'default', label: 'English', short: 'EN', flag: '🇺🇸' },
         { code: 'es_mx', label: 'Spanish (MX)', short: 'MX', flag: '🇲🇽' },
@@ -23,6 +27,11 @@ const Header = () => {
     ];
 
     const currentLang = LANGUAGES.find(l => l.code === audioLanguage) || LANGUAGES[0];
+
+    const handleGameComplete = (winner) => {
+        nextGame(winner);
+        setShowResultModal(false);
+    };
 
     return (
         <header className="header glass-panel">
@@ -118,16 +127,24 @@ const Header = () => {
                 </div>
 
                 {!currentStep && (
-                    <button className="btn-primary" onClick={nextGame}>
+                    <button className="btn-primary" onClick={() => setShowResultModal(true)}>
                         NEXT GAME
                     </button>
                 )}
+
                 <button className="btn-secondary" onClick={() => {
                     if (confirm('Are you sure you want to reset the series?')) resetSeries();
                 }}>
                     RESET
                 </button>
             </div>
+
+            {/* Modals */}
+            <GameResultModal
+                isOpen={showResultModal}
+                onClose={() => setShowResultModal(false)}
+                onConfirm={handleGameComplete}
+            />
         </header>
     );
 };

@@ -81,6 +81,9 @@ export const useDraftStore = create((set, get) => ({
     // Each entry: { gameNumber: 1, picks: [], bans: [] }
     history: [],
 
+    // Series State
+    isSeriesComplete: false,
+
     // Actions
     selectChampion: (champion) => {
         const { currentStepIndex, blueSide, redSide } = get();
@@ -117,25 +120,41 @@ export const useDraftStore = create((set, get) => ({
             gameNumber: gameCount,
             picks: [...blueSide.picks, ...redSide.picks].filter(Boolean),
             bans: [...blueSide.bans, ...redSide.bans].filter(Boolean),
-            bluePicks: [...blueSide.picks],
-            redPicks: [...redSide.picks],
-            blueBans: [...blueSide.bans],
-            redBans: [...redSide.bans],
+            bluePicks: [...blueSide.picks].filter(Boolean),
+            redPicks: [...redSide.picks].filter(Boolean),
+            blueBans: [...blueSide.bans].filter(Boolean),
+            redBans: [...redSide.bans].filter(Boolean),
             winner: winner, // 'BLUE' or 'RED'
         };
 
-        set({
-            gameCount: gameCount + 1,
-            currentStepIndex: 0,
-            blueSide: { ...blueSide, bans: Array(5).fill(null), picks: Array(5).fill(null) },
-            redSide: { ...redSide, bans: Array(5).fill(null), picks: Array(5).fill(null) },
-            history: [...history, gameRecord],
-        });
+        const newHistory = [...history, gameRecord];
+
+        // Check Series Completion
+        const blueWins = newHistory.filter(h => h.winner === 'BLUE').length;
+        const redWins = newHistory.filter(h => h.winner === 'RED').length;
+        const isSeriesOver = gameCount >= 5 || blueWins >= 3 || redWins >= 3;
+
+        if (isSeriesOver) {
+            set({
+                history: newHistory,
+                isSeriesComplete: true
+                // Do NOT increment gameCount or reset board, so we stay on the final game state in background
+            });
+        } else {
+            set({
+                gameCount: gameCount + 1,
+                currentStepIndex: 0,
+                blueSide: { ...blueSide, bans: Array(5).fill(null), picks: Array(5).fill(null) },
+                redSide: { ...redSide, bans: Array(5).fill(null), picks: Array(5).fill(null) },
+                history: newHistory,
+            });
+        }
     },
 
     resetSeries: () => {
         set({
             gameCount: 1,
+            isSeriesComplete: false,
             currentStepIndex: 0,
             blueSide: { name: 'Blue Team', bans: Array(5).fill(null), picks: Array(5).fill(null) },
             redSide: { name: 'Red Team', bans: Array(5).fill(null), picks: Array(5).fill(null) },
