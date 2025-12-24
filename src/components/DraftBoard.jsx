@@ -10,7 +10,8 @@ const Slot = ({ type, side, index, champion, isActive }) => {
                         alt={champion.name}
                         className="champion-img"
                     />
-                    <div className="champion-name">{champion.name}</div>
+                    {type === 'PICK' && <div className="champion-name">{champion.name}</div>}
+                    {type === 'BAN' && <div className="ban-overlay-line"></div>}
                 </div>
             ) : (
                 <div className="empty-slot">

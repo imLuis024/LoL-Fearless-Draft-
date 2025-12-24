@@ -401,11 +401,62 @@ body {
   opacity: 0.3;
 }
 
+
 .champion-image-container {
   width: 100%;
   height: 100%;
   position: relative;
 }
+
+/* Ban Specific Styles */
+.draft-slot.ban .champion-img {
+  filter: grayscale(100%);
+  transition: filter 0.8s ease;
+  /* Smooth transition for the "blocking" animation */
+}
+
+/* Diagonal Line Overlay */
+.ban-overlay-line {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 60%;
+  height: 3px;
+  background: white;
+  transform: translate(-50%, -50%) rotate(45deg);
+  /* Use 45deg to match the user's reference (bottom-left to top-right looks like / , but user image had \ which is -45 or 135? Let's check user image) */
+  /* Re-checking user image: The line goes from bottom-left to top-right. That is -45deg or 45deg depending on rotation direction. 
+     Usually positive rotation is clockwise. 
+       0deg = horizontal -.
+       45deg = \ (top-left to bottom-right). 
+       -45deg = / (bottom-left to top-right).
+     Wait, Standard CSS rotate: 
+       0 is 3 o'clock. 
+       45 is 4:30. (\ slant)
+       -45 is 1:30. (/ slant)
+     Let's look at the reference image again: `uploaded_image_1766597331594.png`. 
+     It shows a line like `/` (bottom-left to top-right). 
+     So I should use -45deg.
+  */
+  transform: translate(-50%, -50%) rotate(-45deg);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+  opacity: 0;
+  animation: slash-appear 0.4s ease 0.2s forwards;
+}
+
+@keyframes slash-appear {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+
+  to {
+    width: 60%;
+    opacity: 1;
+  }
+}
+
 
 .champion-img {
   width: 100%;
