@@ -54,8 +54,9 @@ const ChampionGrid = () => {
             if (champion.key) {
                 try {
                     const lang = audioLanguage || 'default';
-                    // Use dynamic URL based on language
-                    const audioUrl = `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/${lang}/v1/champion-choose-vo/${champion.key}.ogg`;
+                    // Use dynamic URL based on language and phase
+                    const audioType = isBanPhase ? 'champion-ban-vo' : 'champion-choose-vo';
+                    const audioUrl = `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/${lang}/v1/${audioType}/${champion.key}.ogg`;
 
                     const audio = new Audio(audioUrl);
                     audio.volume = 0.4;

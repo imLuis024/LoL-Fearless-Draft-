@@ -14,7 +14,7 @@ export const CHAMPION_ROLES = {
     "Aphelios": ["ADC"],
     "Ashe": ["ADC", "Support"],
     "AurelionSol": ["Mid"],
-    "Aurora": ["Mid", "Top"], // Recent release
+    "Aurora": ["Mid", "Top"],
     "Azir": ["Mid"],
 
     // B
@@ -45,7 +45,7 @@ export const CHAMPION_ROLES = {
     "Ezreal": ["ADC"],
 
     // F
-    "FiddleSticks": ["Jungle", "Support"], // Note capital S for key
+    "FiddleSticks": ["Jungle", "Support"],
     "Fiora": ["Top"],
     "Fizz": ["Mid"],
 
