@@ -3,6 +3,19 @@ import { useDraftStore } from '../logic/store';
 
 const ROLES = ["Top", "Jungle", "Mid", "ADC", "Support"];
 
+// Special "None" champion for skipping bans
+// This champion has unique properties:
+// - Only available during BAN phase
+// - Can be selected multiple times by both teams (no Fearless restriction)
+// - Does not play audio or count as a normal champion
+const NONE_CHAMPION = {
+    id: -1,
+    name: 'None',
+    image: 'https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/-1.png',
+    key: null,
+    roles: []
+};
+
 const ChampionGrid = () => {
     const {
         selectChampion,
@@ -10,11 +23,15 @@ const ChampionGrid = () => {
         champions,
         isLoading,
         error,
-        audioLanguage
+        audioLanguage,
+        getCurrentStep
     } = useDraftStore();
 
     const [search, setSearch] = useState('');
     const [roleFilter, setRoleFilter] = useState(null);
+
+    const currentStep = getCurrentStep();
+    const isBanPhase = currentStep && currentStep.type === 'BAN';
 
     const filteredChampions = useMemo(() => {
         return champions.filter(c => {
@@ -84,6 +101,18 @@ const ChampionGrid = () => {
 
             {/* Grid */}
             <div className="champions-list">
+                {/* Show "None" option only during BAN phase */}
+                {isBanPhase && (
+                    <div
+                        key={NONE_CHAMPION.id}
+                        className="champion-card none-option"
+                        onClick={() => handleSelect(NONE_CHAMPION)}
+                    >
+                        <img src={NONE_CHAMPION.image} alt={NONE_CHAMPION.name} loading="lazy" />
+                        <div className="champion-name-overlay">{NONE_CHAMPION.name}</div>
+                    </div>
+                )}
+
                 {filteredChampions.map(champ => {
                     const { disabled, reason } = isChampionDisabled(champ.id);
                     return (

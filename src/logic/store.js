@@ -175,6 +175,10 @@ export const useDraftStore = create((set, get) => ({
     isChampionDisabled: (championId) => {
         const { history, blueSide, redSide } = get();
 
+        // Special case: "None" champion (id=-1) is always available during ban phase
+        // It can be used multiple times by both teams
+        if (championId === -1) return { disabled: false, reason: null };
+
         // 1. Check if picked/banned in CURRENT game
         const currentUsed = [
             ...blueSide.picks, ...blueSide.bans,

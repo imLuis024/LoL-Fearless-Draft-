@@ -63,13 +63,16 @@ export const fetchChampions = async (version) => {
             // Ensure every champion has at least one role if somehow missed
             if (roles.size === 0) roles.add("Mid");
 
+            // Special case for Fiddlesticks - the centered image URL requires "FiddleSticks" with capital S
+            const centeredImageId = champ.id === 'Fiddlesticks' ? 'FiddleSticks' : champ.id;
+
             return {
                 id: champ.id,
                 key: champ.key,
                 name: champ.name,
                 roles: Array.from(roles),
                 image: `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${champ.image.full}`,
-                centeredImage: `https://ddragon.leagueoflegends.com/cdn/img/champion/centered/${champ.id}_0.jpg`,
+                centeredImage: `https://ddragon.leagueoflegends.com/cdn/img/champion/centered/${centeredImageId}_0.jpg`,
                 audio: `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-choose-vo/${champ.key}.ogg`
             };
         });

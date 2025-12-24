@@ -484,7 +484,8 @@ body {
   grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   gap: 8px;
   overflow-y: auto;
-  padding-right: 4px;
+  padding: 8px;
+  /* Add padding to prevent golden border from being clipped on first/last rows */
   flex: 1;
 }
 
@@ -559,4 +560,16 @@ body {
   border: 1px solid var(--color-gold-200);
   color: var(--color-gold-200);
   background: rgba(0, 0, 0, 0.8);
+}
+
+/* None Option Styling */
+.champion-card.none-option {
+  border: 2px solid var(--color-blue-action);
+  border-radius: 4px;
+  background: rgba(0, 200, 200, 0.1);
+}
+
+.champion-card.none-option:hover {
+  box-shadow: 0 0 15px rgba(0, 200, 200, 0.4);
+  border-color: var(--color-blue-action);
 }
