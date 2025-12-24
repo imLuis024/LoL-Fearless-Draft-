@@ -11,21 +11,7 @@ const TAG_TO_ROLE_MAP = {
 
 // Exceptional overrides for common champions that don't fit the strict class mapping perfectly
 // This improves the "feel" of the heuristics
-const ROLE_OVERRIDES = {
-    "Jayce": ["Top", "Mid"],
-    "Gangplank": ["Top"],
-    "Fiora": ["Top"],
-    "Camille": ["Top"],
-    "Irelia": ["Top", "Mid"],
-    "Graves": ["Jungle"],
-    "Nidalee": ["Jungle"],
-    "Kindred": ["Jungle"],
-    "Senna": ["Support", "ADC"],
-    "Pyke": ["Support"],
-    "Thresh": ["Support"],
-    "Blitzcrank": ["Support"],
-    "Nautilus": ["Support"]
-};
+import { CHAMPION_ROLES } from './championRoles';
 
 export const fetchPatchVersion = async () => {
     try {
@@ -47,11 +33,12 @@ export const fetchChampions = async (version) => {
             // Calculate roles
             let roles = new Set();
 
-            // Apply Overrides first
-            if (ROLE_OVERRIDES[champ.id]) {
-                ROLE_OVERRIDES[champ.id].forEach(r => roles.add(r));
+            // Apply Static Role Mapping first (Most accurate)
+            const staticRoles = CHAMPION_ROLES[champ.id];
+            if (staticRoles) {
+                staticRoles.forEach(r => roles.add(r));
             } else {
-                // Apply Heuristic Mapping based on Tags
+                // Fallback to Heuristic Mapping based on Tags if not in static list
                 champ.tags.forEach(tag => {
                     const mappedRoles = TAG_TO_ROLE_MAP[tag];
                     if (mappedRoles) {
