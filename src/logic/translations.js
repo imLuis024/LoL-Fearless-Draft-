@@ -8,8 +8,8 @@ export const TRANSLATIONS = {
         SIDE: "SIDE",
         PICK: "PICK",
         BAN: "BAN",
-        VICTORY_BLUE: "VICTORY (BLUE)",
-        VICTORY_RED: "VICTORY (RED)",
+        VICTORY_BLUE: "VICTORY TEAM 1",
+        VICTORY_RED: "VICTORY TEAM 2",
         SERIES_SUMMARY: "SERIES SUMMARY",
         MATCH_HISTORY: "MATCH HISTORY",
         CHAMPIONS_PLAYED: "CHAMPIONS PLAYED",
@@ -21,8 +21,8 @@ export const TRANSLATIONS = {
         NEW_SERIES: "NEW SERIES",
         NEW_SERIES_CONFIRM: "Start new series?",
         WHO_WON: "WHO WON GAME",
-        BLUE_TEAM: "BLUE TEAM",
-        RED_TEAM: "RED TEAM",
+        BLUE_TEAM: "TEAM 1",
+        RED_TEAM: "TEAM 2",
         CONFIRM: "CONFIRM"
     },
     es: {
@@ -34,8 +34,8 @@ export const TRANSLATIONS = {
         SIDE: "LADO",
         PICK: "PICK",
         BAN: "BAN",
-        VICTORY_BLUE: "VICTORIA (BLUE)",
-        VICTORY_RED: "VICTORIA (RED)",
+        VICTORY_BLUE: "VICTORIA EQUIPO 1",
+        VICTORY_RED: "VICTORIA EQUIPO 2",
         SERIES_SUMMARY: "RESUMEN DE SERIE",
         MATCH_HISTORY: "HISTORIAL DE PARTIDAS",
         CHAMPIONS_PLAYED: "CAMPEONES JUGADOS",
@@ -47,8 +47,8 @@ export const TRANSLATIONS = {
         NEW_SERIES: "NUEVA SERIE",
         NEW_SERIES_CONFIRM: "¿Iniciar nueva serie?",
         WHO_WON: "¿QUIÉN GANÓ LA PARTIDA",
-        BLUE_TEAM: "EQUIPO AZUL",
-        RED_TEAM: "EQUIPO ROJO",
+        BLUE_TEAM: "EQUIPO 1",
+        RED_TEAM: "EQUIPO 2",
         CONFIRM: "CONFIRMAR"
     }
 };

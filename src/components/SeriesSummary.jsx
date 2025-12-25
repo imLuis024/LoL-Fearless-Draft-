@@ -15,39 +15,54 @@ const SeriesSummary = ({ isOpen }) => {
     if (!isOpen) return null;
 
     // Calculate Stats
-    const blueWins = history.filter(h => h.winner === 'BLUE').length;
-    const redWins = history.filter(h => h.winner === 'RED').length;
+    // Fallbacks for winningTeam are for safety, though store update ensures it exists
+    const team1Wins = history.filter(h => h.winningTeam === 'TEAM1' || (h.winner === 'BLUE' && h.team1IsBlue) || (h.winner === 'RED' && !h.team1IsBlue)).length;
+    const team2Wins = history.filter(h => h.winningTeam === 'TEAM2' || (h.winner === 'RED' && h.team1IsBlue) || (h.winner === 'BLUE' && !h.team1IsBlue)).length;
 
-    const getUniqueChamps = (games, side) => {
+    const getUniqueChamps = (games, team) => {
         const all = [];
         games.forEach(g => {
-            const picks = side === 'BLUE' ? (g.bluePicks || []) : (g.redPicks || []);
-            picks.forEach(p => {
-                if (p && !all.find(existing => existing.id === p.id)) {
-                    all.push(p);
-                }
-            });
+            // Support new 'team1Picks' structure, fallback to side logic if missing
+            let picks = [];
+            if (team === 'TEAM1') {
+                picks = g.team1Picks || (g.team1IsBlue ? g.bluePicks : g.redPicks) || [];
+            } else {
+                picks = g.team2Picks || (!g.team1IsBlue ? g.bluePicks : g.redPicks) || [];
+            }
+
+            // Clean variable name
+            const targetPicks = team === 'TEAM1' ? g.team1Picks : g.team2Picks;
+
+            if (targetPicks) {
+                targetPicks.forEach(p => {
+                    if (p && !all.find(existing => existing.id === p.id)) {
+                        all.push(p);
+                    }
+                });
+            }
         });
         return all;
     };
 
-    const getUniqueBans = (games, side) => {
+    const getUniqueBans = (games, team) => {
         const all = [];
         games.forEach(g => {
-            const bans = side === 'BLUE' ? (g.blueBans || []) : (g.redBans || []);
-            bans.forEach(b => {
-                if (b && !all.find(existing => existing.id === b.id)) {
-                    all.push(b);
-                }
-            });
+            const targetBans = team === 'TEAM1' ? g.team1Bans : g.team2Bans;
+            if (targetBans) {
+                targetBans.forEach(b => {
+                    if (b && !all.find(existing => existing.id === b.id)) {
+                        all.push(b);
+                    }
+                });
+            }
         });
         return all;
     };
 
-    const bluePool = getUniqueChamps(history, 'BLUE');
-    const redPool = getUniqueChamps(history, 'RED');
-    const blueBans = getUniqueBans(history, 'BLUE');
-    const redBans = getUniqueBans(history, 'RED');
+    const team1Pool = getUniqueChamps(history, 'TEAM1');
+    const team2Pool = getUniqueChamps(history, 'TEAM2');
+    const team1Bans = getUniqueBans(history, 'TEAM1');
+    const team2Bans = getUniqueBans(history, 'TEAM2');
 
     // Export Logic
     const generateCanvas = async () => {
@@ -365,7 +380,7 @@ const SeriesSummary = ({ isOpen }) => {
                         marginBottom: '50px',
                         position: 'relative'
                     }}>
-                        {/* Blue Side */}
+                        {/* Team 1 Side */}
                         <div style={{
                             flex: 1,
                             background: 'linear-gradient(90deg, transparent 0%, rgba(0, 200, 200, 0.2) 100%)',
@@ -376,7 +391,7 @@ const SeriesSummary = ({ isOpen }) => {
                             justifyContent: 'flex-end',
                             paddingRight: '30px'
                         }}>
-                            <span style={{ fontSize: '2rem', fontWeight: 'bold', color: '#00c8c8', letterSpacing: '2px' }}>{t.BLUE_TEAM}</span>
+                            <span style={{ fontSize: '2rem', fontWeight: 'bold', color: '#00c8c8', letterSpacing: '2px' }}>{t.BLUE_TEAM || "TEAM 1"}</span>
                         </div>
 
                         {/* Center Score */}
@@ -390,12 +405,12 @@ const SeriesSummary = ({ isOpen }) => {
                             gap: '20px',
                             textShadow: '0 0 20px rgba(200, 170, 110, 0.5)'
                         }}>
-                            <span>[{blueWins}</span>
+                            <span>[{team1Wins}</span>
                             <span style={{ color: '#c8aa6e', fontSize: '2rem' }}>-</span>
-                            <span>{redWins}]</span>
+                            <span>{team2Wins}]</span>
                         </div>
 
-                        {/* Red Side */}
+                        {/* Team 2 Side */}
                         <div style={{
                             flex: 1,
                             background: 'linear-gradient(90deg, rgba(255, 70, 85, 0.2) 0%, transparent 100%)',
@@ -406,7 +421,7 @@ const SeriesSummary = ({ isOpen }) => {
                             justifyContent: 'flex-start',
                             paddingLeft: '30px'
                         }}>
-                            <span style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ff4655', letterSpacing: '2px' }}>{t.RED_TEAM}</span>
+                            <span style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ff4655', letterSpacing: '2px' }}>{t.RED_TEAM || "TEAM 2"}</span>
                         </div>
                     </div>
 
@@ -419,27 +434,32 @@ const SeriesSummary = ({ isOpen }) => {
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {history.map((game, i) => (
-                                <div key={i} style={{
-                                    display: 'flex',
-                                    justifyContent: 'center',
-                                    padding: '12px',
-                                    background: game.winner === 'BLUE'
-                                        ? 'linear-gradient(90deg, transparent, rgba(0, 200, 200, 0.1), transparent)'
-                                        : 'linear-gradient(90deg, transparent, rgba(255, 70, 85, 0.1), transparent)',
-                                    borderTop: '1px solid rgba(255,255,255,0.05)',
-                                    borderBottom: '1px solid rgba(255,255,255,0.05)'
-                                }}>
-                                    <span style={{ color: '#c8aa6e', fontWeight: 'bold', marginRight: '10px' }}>{t.GAME} {game.gameNumber}:</span>
-                                    <span style={{
-                                        fontWeight: 'bold',
-                                        color: game.winner === 'BLUE' ? '#00c8c8' : '#ff4655',
-                                        textTransform: 'uppercase'
+                            {history.map((game, i) => {
+                                const isTeam1Win = game.winningTeam === 'TEAM1' || (!game.winningTeam && (game.winner === 'BLUE' && game.team1IsBlue) || (game.winner === 'RED' && !game.team1IsBlue));
+
+                                return (
+                                    <div key={i} style={{
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        padding: '12px',
+                                        background: game.winnerSide === 'BLUE'
+                                            ? 'linear-gradient(90deg, transparent, rgba(0, 200, 200, 0.1), transparent)'
+                                            : 'linear-gradient(90deg, transparent, rgba(255, 70, 85, 0.1), transparent)',
+                                        borderTop: '1px solid rgba(255,255,255,0.05)',
+                                        borderBottom: '1px solid rgba(255,255,255,0.05)'
                                     }}>
-                                        {game.winner === 'BLUE' ? t.VICTORY_BLUE : t.VICTORY_RED}
-                                    </span>
-                                </div>
-                            ))}
+                                        <span style={{ color: '#c8aa6e', fontWeight: 'bold', marginRight: '10px' }}>{t.GAME} {game.gameNumber}:</span>
+                                        <span style={{
+                                            fontWeight: 'bold',
+                                            color: game.winnerSide === 'BLUE' ? '#00c8c8' : '#ff4655',
+                                            textTransform: 'uppercase'
+                                        }}>
+                                            {/* Fallback translation or explicit string */}
+                                            {isTeam1Win ? (t.VICTORY_BLUE || "VICTORY TEAM 1") : (t.VICTORY_RED || "VICTORY TEAM 2")}
+                                        </span>
+                                    </div>
+                                )
+                            })}
                         </div>
                     </div>
 
@@ -453,7 +473,7 @@ const SeriesSummary = ({ isOpen }) => {
                             <div style={{ height: '1px', background: '#c8aa6e', flex: 1, opacity: 0.5 }}></div>
                         </div>
 
-                        {/* Blue Pool */}
+                        {/* Team 1 Pool */}
                         <div style={{ display: 'flex', marginBottom: '20px', alignItems: 'flex-start' }}>
                             <div style={{
                                 width: '40px', display: 'flex', justifyContent: 'center', paddingTop: '20px', marginRight: '10px'
@@ -462,10 +482,10 @@ const SeriesSummary = ({ isOpen }) => {
                                     width: '30px', height: '30px', border: '2px solid #00c8c8',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                     color: '#00c8c8', fontWeight: 'bold'
-                                }}>B</div>
+                                }}>1</div>
                             </div>
                             <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                                {bluePool.map(c => (
+                                {team1Pool.map(c => (
                                     <div key={c.id} style={{
                                         position: 'relative',
                                         width: '80px',
@@ -484,7 +504,7 @@ const SeriesSummary = ({ isOpen }) => {
                             </div>
                         </div>
 
-                        {/* Red Pool */}
+                        {/* Team 2 Pool */}
                         <div style={{ display: 'flex', alignItems: 'flex-start' }}>
                             <div style={{
                                 width: '40px', display: 'flex', justifyContent: 'center', paddingTop: '20px', marginRight: '10px'
@@ -493,10 +513,10 @@ const SeriesSummary = ({ isOpen }) => {
                                     width: '30px', height: '30px', border: '2px solid #ff4655',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                     color: '#ff4655', fontWeight: 'bold'
-                                }}>R</div>
+                                }}>2</div>
                             </div>
                             <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                                {redPool.map(c => (
+                                {team2Pool.map(c => (
                                     <div key={c.id} style={{
                                         position: 'relative',
                                         width: '80px',
@@ -525,17 +545,17 @@ const SeriesSummary = ({ isOpen }) => {
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '8px', opacity: 0.8 }}>
-                            {/* Blue Bans */}
+                            {/* Team 1 Bans */}
                             <div style={{ display: 'flex', gap: '4px', borderRight: '1px solid #555', paddingRight: '10px', marginRight: '10px' }}>
-                                {blueBans.map(c => (
+                                {team1Bans.map(c => (
                                     <div key={c.id} style={{ width: '40px', height: '40px', border: '1px solid #ff4655', filter: 'grayscale(100%)' }}>
                                         <img src={c.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                     </div>
                                 ))}
                             </div>
-                            {/* Red Bans */}
+                            {/* Team 2 Bans */}
                             <div style={{ display: 'flex', gap: '4px' }}>
-                                {redBans.map(c => (
+                                {team2Bans.map(c => (
                                     <div key={c.id} style={{ width: '40px', height: '40px', border: '1px solid #ff4655', filter: 'grayscale(100%)' }}>
                                         <img src={c.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                     </div>

@@ -3,10 +3,17 @@ import { useDraftStore } from '../logic/store';
 import { TRANSLATIONS } from '../logic/translations';
 
 const GameResultModal = ({ isOpen, onClose, onConfirm }) => {
-    const { uiLanguage } = useDraftStore();
+    const { uiLanguage, team1IsBlue } = useDraftStore();
     const t = TRANSLATIONS[uiLanguage] || TRANSLATIONS.en;
 
     if (!isOpen) return null;
+
+    // Determine which team is on which side and their colors
+    const team1Side = team1IsBlue ? 'BLUE' : 'RED';
+    const team2Side = team1IsBlue ? 'RED' : 'BLUE';
+
+    const team1Color = team1IsBlue ? '#0acbe6' : '#ff4655';
+    const team2Color = team1IsBlue ? '#ff4655' : '#0acbe6';
 
     return (
         <div className="fixed inset-0 z-[1500] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fadeIn"
@@ -31,15 +38,15 @@ const GameResultModal = ({ isOpen, onClose, onConfirm }) => {
 
                 <div className="flex gap-6 justify-center" style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center' }}>
 
-                    {/* Blue Team Button */}
+                    {/* Team 1 Button - Color based on current side */}
                     <button
-                        onClick={() => onConfirm('BLUE')}
+                        onClick={() => onConfirm(team1Side)}
                         className="group relative overflow-hidden transition-all duration-300 hover:scale-105"
                         style={{
                             padding: '1.5rem 3rem',
-                            border: '1px solid #0acbe6',
-                            background: 'linear-gradient(135deg, rgba(10, 203, 230, 0.1) 0%, rgba(10, 203, 230, 0.2) 100%)',
-                            color: '#0acbe6',
+                            border: `1px solid ${team1Color}`,
+                            background: `linear-gradient(135deg, ${team1Color}1a 0%, ${team1Color}33 100%)`,
+                            color: team1Color,
                             fontWeight: 'bold',
                             fontSize: '1.2rem',
                             cursor: 'pointer',
@@ -47,18 +54,21 @@ const GameResultModal = ({ isOpen, onClose, onConfirm }) => {
                         }}
                     >
                         <span className="relative z-10 drop-shadow-md">{t.BLUE_TEAM}</span>
-                        <div className="absolute inset-0 bg-[#0acbe6] opacity-0 group-hover:opacity-10 transition-opacity"></div>
+                        <div
+                            className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity"
+                            style={{ background: team1Color }}
+                        ></div>
                     </button>
 
-                    {/* Red Team Button */}
+                    {/* Team 2 Button - Color based on current side */}
                     <button
-                        onClick={() => onConfirm('RED')}
+                        onClick={() => onConfirm(team2Side)}
                         className="group relative overflow-hidden transition-all duration-300 hover:scale-105"
                         style={{
                             padding: '1.5rem 3rem',
-                            border: '1px solid #ff4655',
-                            background: 'linear-gradient(135deg, rgba(255, 70, 85, 0.1) 0%, rgba(255, 70, 85, 0.2) 100%)',
-                            color: '#ff4655',
+                            border: `1px solid ${team2Color}`,
+                            background: `linear-gradient(135deg, ${team2Color}1a 0%, ${team2Color}33 100%)`,
+                            color: team2Color,
                             fontWeight: 'bold',
                             fontSize: '1.2rem',
                             cursor: 'pointer',
@@ -66,7 +76,10 @@ const GameResultModal = ({ isOpen, onClose, onConfirm }) => {
                         }}
                     >
                         <span className="relative z-10 drop-shadow-md">{t.RED_TEAM}</span>
-                        <div className="absolute inset-0 bg-[#ff4655] opacity-0 group-hover:opacity-10 transition-opacity"></div>
+                        <div
+                            className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity"
+                            style={{ background: team2Color }}
+                        ></div>
                     </button>
 
                 </div>

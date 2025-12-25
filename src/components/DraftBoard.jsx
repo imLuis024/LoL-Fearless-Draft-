@@ -1,4 +1,5 @@
 import { useDraftStore } from '../logic/store';
+import { TRANSLATIONS } from '../logic/translations';
 
 const Slot = ({ type, side, index, champion, isActive }) => {
     return (
@@ -23,19 +24,29 @@ const Slot = ({ type, side, index, champion, isActive }) => {
 };
 
 const DraftBoard = () => {
-    const { blueSide, redSide, getCurrentStep } = useDraftStore();
+    const { blueSide, redSide, getCurrentStep, team1IsBlue, uiLanguage } = useDraftStore();
     const currentStep = getCurrentStep();
+    const t = TRANSLATIONS[uiLanguage] || TRANSLATIONS.en;
 
     const isSlotActive = (side, type, index) => {
         if (!currentStep) return false;
         return currentStep.side === side && currentStep.type === type && currentStep.index === index;
     };
 
+    // Determine which team is on which side
+    const blueTeamLabel = team1IsBlue
+        ? (uiLanguage === 'es' ? 'EQUIPO 1 (Lado Azul)' : 'TEAM 1 (Blue Side)')
+        : (uiLanguage === 'es' ? 'EQUIPO 2 (Lado Azul)' : 'TEAM 2 (Blue Side)');
+
+    const redTeamLabel = team1IsBlue
+        ? (uiLanguage === 'es' ? 'EQUIPO 2 (Lado Rojo)' : 'TEAM 2 (Red Side)')
+        : (uiLanguage === 'es' ? 'EQUIPO 1 (Lado Rojo)' : 'TEAM 1 (Red Side)');
+
     return (
         <div className="draft-board">
             {/* Blue Team */}
             <div className="team-column blue-team">
-                <h2 className="team-name text-blue">BLUE TEAM</h2>
+                <h2 className="team-name text-blue">{blueTeamLabel}</h2>
 
                 <div className="picks-container">
                     {blueSide.picks.map((champ, i) => (
@@ -83,7 +94,7 @@ const DraftBoard = () => {
 
             {/* Red Team */}
             <div className="team-column red-team">
-                <h2 className="team-name text-red">RED TEAM</h2>
+                <h2 className="team-name text-red">{redTeamLabel}</h2>
 
                 <div className="picks-container">
                     {redSide.picks.map((champ, i) => (
